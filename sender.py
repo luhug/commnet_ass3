@@ -116,6 +116,7 @@ class GBNSender(Automaton):
 
                 # add the current segment to the payload and SACK buffer
                 self.buffer[self.current] = payload
+                log.debug("Adding %s to buffer" % self.current)
                 log.debug("Current buffer size: %s" % len(self.buffer))
                 
                 ###############################################################
@@ -194,6 +195,7 @@ class GBNSender(Automaton):
                 for x in range(ack):
                     if ack in self.buffer:
                         del self.buffer[ack]
+                        log.debug("Removing %s from buffer" % ack)
                         del self.srcounter[ack] #[3.2.2] Reset counter for wraparound handling
 
                 # set self.unack to the first not acknowledged packet
@@ -215,7 +217,7 @@ class GBNSender(Automaton):
                         send(IP(src=self.sender, dst=self.receiver) / header_GBN / self.buffer[ack])
                     else: #[3.2.2] In this case we cannot retransmit the packet as it has already been deleted from the buffer
                         log.error("Packet already acknowledged: %s" % ack)
-                        log.debug("Buffer is %s" % str(self.buffer))
+                        log.debug("Buffer is %s" % str(self.buffer.keys()))
 
         # back to SEND state
         raise self.SEND()
