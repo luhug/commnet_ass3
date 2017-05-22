@@ -79,6 +79,7 @@ class GBNReceiver(Automaton):
         self.p_size = chunk_size
         self.end_receiver = False
         self.end_num = -1
+        self.buffer = {}
 
     def master_filter(self, pkt):
         """Filter packts of interest.
@@ -140,21 +141,33 @@ class GBNReceiver(Automaton):
                 if pkt.getlayer(GBN).num == self.next:
                     log.debug("Packet has expected sequence number: %s",
                               pkt.getlayer(GBN).num)
-
+                    
                     # write payload to file
                     result = open(self.out_file, 'ab')
                     result.write(str(pkt.getlayer(GBN).payload))
                     result.close()
                     log.debug("Delivered packet to upper layer: %s",
                               pkt.getlayer(GBN).num)
-
                     self.next = int((self.next + 1) % 2**self.n_bits)
 
+                    #[3.2.1] Check if there are any packets in the buffer that can now be written
+                    while self.next in self.buffer:
+                        log.debug("Writing packet from buffer: %s", self.next)
+                        result = open(self.out_file, 'ab')
+                        result.write(str(buffer[self.next]))
+                        result.close()
+                        log.debug("Delivered packet to upper layer: %s",
+                              pkt.getlayer(GBN).num)
+                        self.next = int((self.next + 1) % 2**self.n_bits)
+                                        
                 # this was not the expected segment
                 else:
                     log.debug("Out of sequence segment [num = %s] received. "
                               "Expected %s", pkt.getlayer(GBN).num, self.next)
-
+                    #[3.2.1] Write packet to buffer if not already in buffer
+                    if ~(pkt.getlayer(GBN).num in self.buffer):
+                        self.buffer[pkt.getlayer(GBN).num] = pkt.getlayer(GBN).payload
+                                        
             else:
                 # we received an ack while we are supposed to receive only
                 # data segments
