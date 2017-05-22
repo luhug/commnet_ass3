@@ -80,6 +80,7 @@ class GBNSender(Automaton):
         self.Q_3_2 = Q_3_2
         self.SACK = Q_3_3
         self.Q_3_4 = Q_3_4
+        self.srcounter = {} #Count how often a packet has been acknowledged
 
     def master_filter(self, pkt):
         """Filter packts of interest.
@@ -157,6 +158,13 @@ class GBNSender(Automaton):
         else:
             log.debug("Received ACK %s" % pkt.getlayer(GBN).num)
 
+            #[3.2.2] count duplicate ACKs
+            if self.Q_3_2:
+                if ack in self.srcounter:
+                    self.srcounter[ack] += 1
+                else:
+                    self.srcounter[ack] = 1
+            
             # set the receiver window size to the received value
             self.receiver_win = pkt.getlayer(GBN).win
 
@@ -181,8 +189,7 @@ class GBNSender(Automaton):
                 # TODO:                                                    #
                 # remove all the acknowledged sequence numbers from buffer #
                 ############################################################
-                #TASK 3.1
-                #Delete all elements from buffer with sequence numbers <= ack
+                #[3.1] Delete all elements from buffer with sequence numbers <= ack
                 for x in range(ack):
                     if ack in self.buffer:
                         del self.buffer[ack]
@@ -193,7 +200,19 @@ class GBNSender(Automaton):
             else:
                 # could be interesting for the selective repeat question or the
                 # SACK question...
-                pass
+                #[3.2.2] if packet was acknowledged more or equal than 3 times since last retransmit, retransmit the packet
+                if self.Q_3_2 and srcounter[ack] >= 3:
+                    if ack in self.buffer:
+                        log.debug("Selective repeat trigerred for packet %s. Retransmitting..." % ack)
+                        header_GBN = GBN(type='data',
+                                         options=0,
+                                         len=len(self.buffer[ack]),
+                                         hlen=6,
+                                         num=ack,
+                                         win=self.win)
+                        send(IP(src=self.sender, dst=self.receiver) / header_GBN / self.buffer[ack])
+                    else: #[3.2.2] In this case we cannot retransmit the packet as it has already been deleted from the buffer
+                        log.error("Packet already acknowledged: %s" % ack)
 
         # back to SEND state
         raise self.SEND()
