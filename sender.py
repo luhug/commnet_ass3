@@ -162,6 +162,7 @@ class GBNSender(Automaton):
             if self.Q_3_2:
                 if ack in self.srcounter:
                     self.srcounter[ack] += 1
+                    log.debug("Received duplicate ACK, count is %s" % self.srcounter[ack]
                 else:
                     self.srcounter[ack] = 1
             
@@ -200,7 +201,7 @@ class GBNSender(Automaton):
             else:
                 # could be interesting for the selective repeat question or the
                 # SACK question...
-                #[3.2.2] if packet was acknowledged more or equal than 3 times since last retransmit, retransmit the packet
+                #[3.2.2] if packet was acknowledged >= 3 times since last retransmit, retransmit the packet
                 if self.Q_3_2 and srcounter[ack] >= 3:
                     if ack in self.buffer:
                         log.debug("Selective repeat trigerred for packet %s. Retransmitting..." % ack)
