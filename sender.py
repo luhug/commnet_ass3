@@ -196,6 +196,7 @@ class GBNSender(Automaton):
                     if x in self.buffer:
                         del self.buffer[x]
                         log.debug("Removing %s from buffer" % x)
+                    if x in self.srcounter:
                         del self.srcounter[x] #[3.2.2] Reset counter for wraparound handling
 
                 # set self.unack to the first not acknowledged packet
