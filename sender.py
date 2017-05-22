@@ -116,6 +116,7 @@ class GBNSender(Automaton):
 
                 # add the current segment to the payload and SACK buffer
                 self.buffer[self.current] = payload
+                log.debug("Adding %s to buffer" % self.current)
                 log.debug("Current buffer size: %s" % len(self.buffer))
                 
                 ###############################################################
@@ -157,11 +158,12 @@ class GBNSender(Automaton):
             raise self.SEND()
         else:
             log.debug("Received ACK %s" % pkt.getlayer(GBN).num)
-
+            ack = pkt.getlayer(GBN).num #Moved this up here because it is needed earlier
             #[3.2.2] count duplicate ACKs
             if self.Q_3_2:
                 if ack in self.srcounter:
                     self.srcounter[ack] += 1
+                    log.debug("Received duplicate ACK, count is %s" % self.srcounter[ack])
                 else:
                     self.srcounter[ack] = 1
             
@@ -180,7 +182,7 @@ class GBNSender(Automaton):
             # the next expected packet
             good_ack = [int((x+1) % 2**self.n_bits)
                         for x in range(self.unack, temp_end)]
-            ack = pkt.getlayer(GBN).num
+            
 
             # ack packet has "good" sequence number
             if ack in good_ack:
@@ -189,10 +191,13 @@ class GBNSender(Automaton):
                 # TODO:                                                    #
                 # remove all the acknowledged sequence numbers from buffer #
                 ############################################################
-                #[3.1] Delete all elements from buffer with sequence numbers <= ack
+                #[3.1] Delete all elements from buffer with sequence numbers < ack
                 for x in range(ack):
-                    if ack in self.buffer:
-                        del self.buffer[ack]
+                    if x in self.buffer:
+                        del self.buffer[x]
+                        log.debug("Removing %s from buffer" % x)
+                    if x in self.srcounter:
+                        del self.srcounter[x] #[3.2.2] Reset counter for wraparound handling
 
                 # set self.unack to the first not acknowledged packet
                 self.unack = ack
@@ -200,8 +205,8 @@ class GBNSender(Automaton):
             else:
                 # could be interesting for the selective repeat question or the
                 # SACK question...
-                #[3.2.2] if packet was acknowledged more or equal than 3 times since last retransmit, retransmit the packet
-                if self.Q_3_2 and srcounter[ack] >= 3:
+                #[3.2.2] if packet was acknowledged >= 3 times since last retransmit, retransmit the packet
+                if self.Q_3_2 and self.srcounter[ack] >= 3:
                     if ack in self.buffer:
                         log.debug("Selective repeat trigerred for packet %s. Retransmitting..." % ack)
                         header_GBN = GBN(type='data',
@@ -213,6 +218,7 @@ class GBNSender(Automaton):
                         send(IP(src=self.sender, dst=self.receiver) / header_GBN / self.buffer[ack])
                     else: #[3.2.2] In this case we cannot retransmit the packet as it has already been deleted from the buffer
                         log.error("Packet already acknowledged: %s" % ack)
+                        log.debug("Buffer is %s" % str(self.buffer.keys()))
 
         # back to SEND state
         raise self.SEND()
