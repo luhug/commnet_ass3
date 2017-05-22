@@ -154,10 +154,11 @@ class GBNReceiver(Automaton):
                     while self.next in self.buffer:
                         log.debug("Writing packet from buffer: %s", self.next)
                         result = open(self.out_file, 'ab')
-                        result.write(str(buffer[self.next]))
+                        result.write(str(self.buffer[self.next]))
                         result.close()
                         log.debug("Delivered packet to upper layer: %s",
                               pkt.getlayer(GBN).num)
+                        del self.buffer[self.next] #Prevent memory leak
                         self.next = int((self.next + 1) % 2**self.n_bits)
                                         
                 # this was not the expected segment
@@ -166,6 +167,7 @@ class GBNReceiver(Automaton):
                               "Expected %s", pkt.getlayer(GBN).num, self.next)
                     #[3.2.1] Write packet to buffer if not already in buffer
                     if ~(pkt.getlayer(GBN).num in self.buffer):
+                        log.debug("Writing %s to buffer")
                         self.buffer[pkt.getlayer(GBN).num] = pkt.getlayer(GBN).payload
                                         
             else:
