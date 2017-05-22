@@ -162,7 +162,7 @@ class GBNSender(Automaton):
             if self.Q_3_2:
                 if ack in self.srcounter:
                     self.srcounter[ack] += 1
-                    log.debug("Received duplicate ACK, count is %s" % self.srcounter[ack]
+                    log.debug("Received duplicate ACK, count is %s" % self.srcounter[ack])
                 else:
                     self.srcounter[ack] = 1
             
