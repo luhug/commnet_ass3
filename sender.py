@@ -8,6 +8,7 @@ from scapy.packet import Packet, bind_layers
 from scapy.fields import (BitEnumField, BitField, ShortField, ByteField,
                           ConditionalField)
 from scapy.automaton import Automaton, ATMT
+from scapy.sendrecv import send
 
 FORMAT = "[SENDER:%(lineno)3s - %(funcName)10s()] %(message)s"
 logging.basicConfig(format=FORMAT)
