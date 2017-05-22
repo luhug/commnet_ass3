@@ -151,7 +151,7 @@ class GBNReceiver(Automaton):
                     self.next = int((self.next + 1) % 2**self.n_bits)
 
                     #[3.2.1] Check if there are any packets in the buffer that can now be written
-                    while self.next in buffer:
+                    while self.next in self.buffer:
                         log.debug("Writing packet from buffer: %s", self.next)
                         result = open(self.out_file, 'ab')
                         result.write(str(buffer[self.next]))
