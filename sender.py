@@ -194,6 +194,7 @@ class GBNSender(Automaton):
                 for x in range(ack):
                     if ack in self.buffer:
                         del self.buffer[ack]
+                        del self.srcounter[ack] #[3.2.2] Reset counter for wraparound handling
 
                 # set self.unack to the first not acknowledged packet
                 self.unack = ack

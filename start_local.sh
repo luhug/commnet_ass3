@@ -40,7 +40,7 @@ Q_3_4=0                    # Use Congestion Control implemented in question 3.4/
 # Parameters for receiver
 OUT_FILE=out_temp.txt      # Output file for the received data from the sender
 RECEIVER_WIN_SIZE=4        # Window size of the receiver
-DATA_L=0                   # Loss probability of data segments (between 0 and 1.0)
+DATA_L=0.2                   # Loss probability of data segments (between 0 and 1.0)
 ACK_L=0                    # Loss probability of ACKs (between 0 and 1.0)
 
 ########################################################################################################
