@@ -157,7 +157,7 @@ class GBNSender(Automaton):
             raise self.SEND()
         else:
             log.debug("Received ACK %s" % pkt.getlayer(GBN).num)
-
+            ack = pkt.getlayer(GBN).num #Moved this up here because it is needed earlier
             #[3.2.2] count duplicate ACKs
             if self.Q_3_2:
                 if ack in self.srcounter:
@@ -180,7 +180,7 @@ class GBNSender(Automaton):
             # the next expected packet
             good_ack = [int((x+1) % 2**self.n_bits)
                         for x in range(self.unack, temp_end)]
-            ack = pkt.getlayer(GBN).num
+            
 
             # ack packet has "good" sequence number
             if ack in good_ack:
