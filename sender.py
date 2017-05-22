@@ -116,14 +116,14 @@ class GBNSender(Automaton):
                 # add the current segment to the payload and SACK buffer
                 self.buffer[self.current] = payload
                 log.debug("Current buffer size: %s" % len(self.buffer))
-
+                
                 ###############################################################
                 # TODO:                                                       #
                 # create a GBN header with the correct header field values    #
                 # send a packet to the receiver containing the created header #
                 # and the corresponding payload                               #
                 ###############################################################
-
+                #TASK 3.1
                 header_GBN = GBN(type='data',options=0,len=len(payload),hlen=6,num=self.current,win=self.win)
                 send(IP(src=self.sender, dst=self.receiver) / header_GBN / payload)
 
@@ -181,7 +181,7 @@ class GBNSender(Automaton):
                 # TODO:                                                    #
                 # remove all the acknowledged sequence numbers from buffer #
                 ############################################################
-
+                #TASK 3.1
                 #Delete all elements from buffer with sequence numbers <= ack
                 for x in range(ack):
                     if ack in self.buffer:
@@ -212,6 +212,7 @@ class GBNSender(Automaton):
         # retransmit all the unacknowledged packets  #
         # (all the packets currently in self.buffer) #
         ##############################################
+        #TASK 3.1
         for seqNr in self.buffer:
             header_GBN = GBN(type='data',
                              options=0,
