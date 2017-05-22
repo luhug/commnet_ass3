@@ -158,7 +158,8 @@ class GBNReceiver(Automaton):
                         result.close()
                         log.debug("Delivered packet to upper layer: %s",
                               pkt.getlayer(GBN).num)
-                        self.next = int((self.next + 1) % 2**self.n_bits
+                        self.next = int((self.next + 1) % 2**self.n_bits)
+                                        
                 # this was not the expected segment
                 else:
                     log.debug("Out of sequence segment [num = %s] received. "
@@ -166,6 +167,7 @@ class GBNReceiver(Automaton):
                     #[3.2.1] Write packet to buffer if not already in buffer
                     if ~(pkt.getlayer(GBN).num in self.buffer):
                         self.buffer[pkt.getlayer(GBN).num] = pkt.getlayer(GBN).payload
+                                        
             else:
                 # we received an ack while we are supposed to receive only
                 # data segments
