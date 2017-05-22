@@ -123,7 +123,8 @@ class GBNSender(Automaton):
                 # and the corresponding payload                               #
                 ###############################################################
 
-
+                header_GBN = GBN(type='data',options=0,len=len(payload),hlen=6,num=self.current,win=self.win)
+                send(IP(src=self.sender, dst=self.receiver) / header_GBN / payload)
 
 
                 # sequence number of next packet
@@ -180,9 +181,9 @@ class GBNSender(Automaton):
                 # remove all the acknowledged sequence numbers from buffer #
                 ############################################################
 
-
-
-
+                #Delete all elements from buffer with sequence numbers <= ack
+                for x in range(ack):
+                    del self.buffer[ack]
 
                 # set self.unack to the first not acknowledged packet
                 self.unack = ack
@@ -209,7 +210,14 @@ class GBNSender(Automaton):
         # retransmit all the unacknowledged packets  #
         # (all the packets currently in self.buffer) #
         ##############################################
-
+        for seqNr in self.buffer:
+            header_GBN = GBN(type='data',
+                             options=0,
+                             len=len(self.buffer[seqNr]),
+                             hlen=6,num=seqNr,
+                             win=self.win)
+            
+            send(IP(src=self.sender, dst=self.receiver) / header_GBN / self.buffer[seqNr])
 
 
 
