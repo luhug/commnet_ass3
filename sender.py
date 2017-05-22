@@ -192,7 +192,7 @@ class GBNSender(Automaton):
                 # remove all the acknowledged sequence numbers from buffer #
                 ############################################################
                 #[3.1] Delete all elements from buffer with sequence numbers < ack
-                for x in range(ack-1):
+                for x in range(ack):
                     if x in self.buffer:
                         del self.buffer[x]
                         log.debug("Removing %s from buffer" % x)
