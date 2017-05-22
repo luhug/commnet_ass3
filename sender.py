@@ -191,12 +191,12 @@ class GBNSender(Automaton):
                 # TODO:                                                    #
                 # remove all the acknowledged sequence numbers from buffer #
                 ############################################################
-                #[3.1] Delete all elements from buffer with sequence numbers <= ack
-                for x in range(ack):
-                    if ack in self.buffer:
-                        del self.buffer[ack]
-                        log.debug("Removing %s from buffer" % ack)
-                        del self.srcounter[ack] #[3.2.2] Reset counter for wraparound handling
+                #[3.1] Delete all elements from buffer with sequence numbers < ack
+                for x in range(ack-1):
+                    if x in self.buffer:
+                        del self.buffer[x]
+                        log.debug("Removing %s from buffer" % x)
+                        del self.srcounter[x] #[3.2.2] Reset counter for wraparound handling
 
                 # set self.unack to the first not acknowledged packet
                 self.unack = ack
