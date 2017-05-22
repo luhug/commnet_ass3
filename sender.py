@@ -184,7 +184,8 @@ class GBNSender(Automaton):
 
                 #Delete all elements from buffer with sequence numbers <= ack
                 for x in range(ack):
-                    del self.buffer[ack]
+                    if ack in self.buffer:
+                        del self.buffer[ack]
 
                 # set self.unack to the first not acknowledged packet
                 self.unack = ack
