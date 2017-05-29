@@ -192,7 +192,7 @@ class GBNReceiver(Automaton):
 
             # the ack will be received correctly
             else:
-
+                log.debug("ACK successfully sent")
                 #If SACK is not supported
                 if pkt.getlayer(GBN).options == 0:
                     header_GBN = GBN(type="ack",
@@ -208,7 +208,7 @@ class GBNReceiver(Automaton):
                 
                 #If SACK is supported
                 else:
-                       
+                    log.debug("Starting SACK procedure")
                     first = True
                     x = self.next
                     #Iterate over all possible SACK blocks.
