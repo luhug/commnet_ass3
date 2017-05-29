@@ -230,7 +230,7 @@ class GBNSender(Automaton):
                         log.error("Packet already acknowledged: %s" % ack)
                         log.debug("Buffer is %s" % str(self.buffer.keys()))
 
-                elif self.Q_3_3 and pkt.getlayer(GBN).options == 1:
+                elif self.SACK and pkt.getlayer(GBN).options == 1:
                      
                     if pkt.getlayer(GBN).sackcnt == 1:
                         last = pkt.getlayer(GBN).sackstart1
@@ -277,6 +277,7 @@ class GBNSender(Automaton):
         ##############################################
         #TASK 3.1
         for seqNr in self.buffer:
+
             header_GBN = GBN(type='data',
                              options=0,
                              len=len(self.buffer[seqNr]),
