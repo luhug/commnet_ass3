@@ -252,20 +252,20 @@ class GBNSender(Automaton):
                                   + range(pkt.getlayer(GBN).sackstart3,pkt.getlayer(GBN).sackstart3+pkt.getlayer(GBN).sacklen3))
 
 
+                    for x in self.buffer.keys():
+                        if x % 2**self.n_bits in sacklist:
+                            del self.buffer[x]
 
                     for x in range(ack,last):
-                        if (x in self.buffer):
-                            if (x % 2**self.n_bits not in sacklist):
-                                log.debug("SACK trigerred for packet %s. Sack List: %s" , x, str(sacklist))
-                                header_GBN = GBN(type='data',
-                                             options=1,
-                                             len=len(self.buffer[x]),
-                                             hlen=6,
-                                             num=x % (2**self.n_bits),
-                                             win=self.win)
-                                send(IP(src=self.sender, dst=self.receiver) / header_GBN / self.buffer[x])
-                            else:
-                                del self.buffer[x]
+                        if (x % 2**self.n_bits not in sacklist) and (x in self.buffer):
+                            log.debug("SACK trigerred for packet %s. Sack List: %s" , x, str(sacklist))
+                            header_GBN = GBN(type='data',
+                                         options=1,
+                                         len=len(self.buffer[x]),
+                                         hlen=6,
+                                         num=x % (2**self.n_bits),
+                                         win=self.win)
+                            send(IP(src=self.sender, dst=self.receiver) / header_GBN / self.buffer[x])
 
                     
 
