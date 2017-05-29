@@ -25,7 +25,7 @@ trap clean_up INT TERM
 ########################################################################################################
 
 # Change X to your group number!
-X=0
+X=25
 
 # The test you want to perform
 # 1: sender Q3.1 (header, ACK handling and retransmission after timeout)
