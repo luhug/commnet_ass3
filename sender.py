@@ -252,9 +252,10 @@ class GBNSender(Automaton):
                                   + range(pkt.getlayer(GBN).sackstart3,pkt.getlayer(GBN).sackstart3+pkt.getlayer(GBN).sacklen3))
 
 
-                    for x in sacklist:
-                        if x in self.buffer:
+                    for x in self.buffer:
+                        if x % 2**self.n_bits in sacklist:
                             del self.buffer[x]
+
                     for x in range(ack,last):
                         if (x % 2**self.n_bits not in sacklist) and (x in self.buffer):
                             log.debug("SACK trigerred for packet %s. Sack List: %s" , x, str(sacklist))
