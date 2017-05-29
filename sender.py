@@ -37,7 +37,7 @@ class GBN(Packet):
                    ByteField("hlen", 0),
                    ByteField("num", 0),
                    ByteField("win", 0),
-                   ConditionalField(ByteField("sackcnt",0), lambda pkt:(pkt.hlen > 6 && pkt.options == 1)),
+                   ConditionalField(ByteField("sackcnt",0), lambda pkt:(pkt.hlen > 6 and pkt.options == 1)),
                    ConditionalField(ByteField("sackstart1",0), lambda pkt:pkt.sackcnt >= 1),
                    ConditionalField(ByteField("sacklen1",0), lambda pkt:pkt.sackcnt >= 1),
                    ConditionalField(ByteField("pad2",0), lambda pkt:pkt.sackcnt >= 2),
