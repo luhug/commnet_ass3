@@ -231,7 +231,7 @@ class GBNSender(Automaton):
                         log.debug("Buffer is %s" % str(self.buffer.keys()))
 
                 elif self.SACK and pkt.getlayer(GBN).options == 1:
-                     
+                    last=ack
                     if pkt.getlayer(GBN).sackcnt == 1:
                         last = pkt.getlayer(GBN).sackstart1
                         sacklist = range(pkt.getlayer(GBN).sackstart1,pkt.getlayer(GBN).sackstart1+pkt.getlayer(GBN).sacklen1)
