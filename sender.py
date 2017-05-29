@@ -250,7 +250,7 @@ class GBNSender(Automaton):
                                   + range(pkt.getlayer(GBN).sackstart3,pkt.getlayer(GBN).sackstart3+pkt.getlayer(GBN).sacklen3))
                     for x in range(0,last):
                         if ~(x in sacklist) and x in self.buffer:
-                            log.debug("SACK trigerred for packet %s. Sack List" , x, str(sacklist))
+                            log.debug("SACK trigerred for packet %s. Sack List: %s" , x, str(sacklist))
                             header_GBN = GBN(type='data',
                                          options=1,
                                          len=len(self.buffer[x]),
