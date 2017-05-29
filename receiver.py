@@ -207,7 +207,7 @@ class GBNReceiver(Automaton):
 	                     verbose=0)
 	            
 	            #If SACK is supported
-	           	else:
+	        	else:
 	            	
 	            	first = True
 	            	x = self.next
