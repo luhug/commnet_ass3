@@ -117,6 +117,7 @@ class GBNSender(Automaton):
         New packets are transmitted to the receiver as long as there is space
         in the window.
         """
+        log.debug("Current sending buffer: %s" % str(self.buffer.keys()))
         # check if you still can send new packets to the receiver
         if len(self.buffer) < min(self.win, self.receiver_win):
             try:
@@ -130,7 +131,7 @@ class GBNSender(Automaton):
                 # add the current segment to the payload and SACK buffer
                 self.buffer[self.current + self.wrapcount] = payload
                 log.debug("Adding %s to buffer" % self.current)
-                log.debug("Current sending buffer: %s" % str(self.buffer.keys()))
+                
                 
                 ###############################################################
                 # TODO:                                                       #
