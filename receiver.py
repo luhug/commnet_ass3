@@ -251,7 +251,7 @@ class GBNReceiver(Automaton):
                         if sackcnt >= 2:
                             header_GBN.sackstart2 = sackstart[1]
                             header_GBN.sacklen2 = sacklen[1]
-                            if sackcnt >= 2:
+                            if sackcnt >= 3:
                                 header_GBN.sackstart3 = sackstart[2]
                                 header_GBN.sacklen3 = sacklen[2]
 
