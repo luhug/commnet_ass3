@@ -220,7 +220,7 @@ class GBNReceiver(Automaton):
                             break                            
                         #Generate contigious blocks
                         
-                        while x % 2**n_bits ~= self.next-1:
+                        while x % 2**n_bits != self.next-1:
                             if x in self.buffer:
                                 if first:
                                     sackstart.append(x)
