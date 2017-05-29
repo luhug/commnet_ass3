@@ -227,7 +227,7 @@ class GBNReceiver(Automaton):
                                 elif x == prev + 1:
                                     sacklen[i] += 1
                                     prev = x
-                                elif !first:
+                                elif ~first:
                                     break
                             x += 1
                         first = True
