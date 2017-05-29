@@ -255,7 +255,7 @@ class GBNSender(Automaton):
                                          options=1,
                                          len=len(self.buffer[x]),
                                          hlen=6,
-                                         num=ack,
+                                         num=x%2**n_bits,
                                          win=self.win)
                             send(IP(src=self.sender, dst=self.receiver) / header_GBN / self.buffer[x])
 
