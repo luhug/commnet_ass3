@@ -91,6 +91,7 @@ class GBNSender(Automaton):
         self.Q_3_4 = Q_3_4
         self.srcounter = {} #Count how often a packet has been acknowledged
         self.wrapcount = -2**self.n_bits #hack but works
+        self.wrapcount2 = 0
 
     def master_filter(self, pkt):
         """Filter packts of interest.
@@ -207,9 +208,11 @@ class GBNSender(Automaton):
                 # remove all the acknowledged sequence numbers from buffer #
                 ############################################################
                 #[3.1] Delete all elements from buffer with sequence numbers < ack
-                for x in range(ack + self.wrapcount):
+                for x in range(ack + self.wrapcount2):
                     if x in self.buffer:
                         del self.buffer[x]
+                        if min(self.buffer.keys()) >= wrapcount:
+                            wrapcount2 = wrapcount
                         log.debug("Removing %s from buffer" % x)
 
                 # set self.unack to the first not acknowledged packet
@@ -255,6 +258,8 @@ class GBNSender(Automaton):
                     for x in self.buffer.keys():
                         if x % 2**self.n_bits in sacklist:
                             del self.buffer[x]
+                            if min(self.buffer.keys()) >= wrapcount:
+                                wrapcount2 = wrapcount
 
                     for x in range(ack,last):
                         if (x % 2**self.n_bits not in sacklist) and (x in self.buffer):
