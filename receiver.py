@@ -192,7 +192,7 @@ class GBNReceiver(Automaton):
 
             # the ack will be received correctly
             else:
-                log.debug("ACK successfully sent")
+
                 #If SACK is not supported
                 if pkt.getlayer(GBN).options == 0:
                     header_GBN = GBN(type="ack",
@@ -220,7 +220,7 @@ class GBNReceiver(Automaton):
                             break                            
                         #Generate contigious blocks
                         
-                        while True:
+                        while x <= max(self.buffer.keys()):
                             if x in self.buffer:
                                 if first:
                                     sackstart.append(x)
@@ -230,7 +230,7 @@ class GBNReceiver(Automaton):
                                 elif x == prev + 1:
                                     sacklen[i] += 1
                                     prev = x
-                                elif first:
+                                elif ~first:
                                     break
                             x += 1
                         first = True
