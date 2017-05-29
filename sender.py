@@ -233,6 +233,7 @@ class GBNSender(Automaton):
 
                 elif self.SACK and pkt.getlayer(GBN).options == 1:
                     last=ack
+                    sacklist = list()
                     if pkt.getlayer(GBN).sackcnt == 1:
                         last = pkt.getlayer(GBN).sackstart1 + self.wrapcount
                         sacklist = range(pkt.getlayer(GBN).sackstart1,pkt.getlayer(GBN).sackstart1+pkt.getlayer(GBN).sacklen1)
