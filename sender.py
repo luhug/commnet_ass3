@@ -211,8 +211,8 @@ class GBNSender(Automaton):
                 for x in range(ack + self.wrapcount2):
                     if x in self.buffer:
                         del self.buffer[x]
-                        if min(self.buffer.keys()) >= wrapcount:
-                            wrapcount2 = wrapcount
+                        if min(self.buffer.keys()) >= self.wrapcount:
+                            self.wrapcount2 = self.wrapcount
                         log.debug("Removing %s from buffer" % x)
 
                 # set self.unack to the first not acknowledged packet
@@ -258,8 +258,8 @@ class GBNSender(Automaton):
                     for x in self.buffer.keys():
                         if x % 2**self.n_bits in sacklist:
                             del self.buffer[x]
-                            if min(self.buffer.keys()) >= wrapcount:
-                                wrapcount2 = wrapcount
+                            if min(self.buffer.keys()) >= self.wrapcount:
+                                self.wrapcount2 = self.wrapcount
 
                     for x in range(ack,last):
                         if (x % 2**self.n_bits not in sacklist) and (x in self.buffer):
