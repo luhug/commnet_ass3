@@ -226,7 +226,7 @@ class GBNSender(Automaton):
                                          hlen=6,
                                          num=ack,
                                          win=self.win)
-                        send(IP(src=self.sender, dst=self.receiver) / header_GBN / self.buffer[ack])
+                        send(IP(src=self.sender, dst=self.receiver) / header_GBN / self.buffer[ack + self.wrapcount])
                     else: #[3.2.2] In this case we cannot retransmit the packet as it has already been deleted from the buffer
                         log.error("Packet already acknowledged: %s" % ack)
                         log.debug("Buffer is %s" % str(self.buffer.keys()))
