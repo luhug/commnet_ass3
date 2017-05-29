@@ -39,14 +39,14 @@ class GBN(Packet):
                    ByteField("num", 0),
                    ByteField("win", 0),
                    ConditionalField(ByteField("sackcnt",0), lambda pkt:(pkt.hlen > 6 and pkt.options == 1)),
-				   ConditionalField(ByteField("sackstart1",0), lambda pkt:pkt.sackcnt >= 1),
-				   ConditionalField(ByteField("sacklen1",0), lambda pkt:pkt.sackcnt >= 1),
-				   ConditionalField(ByteField("pad2",0), lambda pkt:pkt.sackcnt >= 2),
-				   ConditionalField(ByteField("sackstart2",0), lambda pkt:pkt.sackcnt >= 2),
-				   ConditionalField(ByteField("sacklen2",0), lambda pkt:pkt.sackcnt >= 2),
-				   ConditionalField(ByteField("pad3",0), lambda pkt:pkt.sackcnt >= 3),
-				   ConditionalField(ByteField("sackstart3",0), lambda pkt:pkt.sackcnt >= 3),
-				   ConditionalField(ByteField("sacklen3",0), lambda pkt:pkt.sackcnt >= 3)]
+                   ConditionalField(ByteField("sackstart1",0), lambda pkt:pkt.sackcnt >= 1),
+                   ConditionalField(ByteField("sacklen1",0), lambda pkt:pkt.sackcnt >= 1),
+                   ConditionalField(ByteField("pad2",0), lambda pkt:pkt.sackcnt >= 2),
+                   ConditionalField(ByteField("sackstart2",0), lambda pkt:pkt.sackcnt >= 2),
+                   ConditionalField(ByteField("sacklen2",0), lambda pkt:pkt.sackcnt >= 2),
+                   ConditionalField(ByteField("pad3",0), lambda pkt:pkt.sackcnt >= 3),
+                   ConditionalField(ByteField("sackstart3",0), lambda pkt:pkt.sackcnt >= 3),
+                   ConditionalField(ByteField("sacklen3",0), lambda pkt:pkt.sackcnt >= 3)]
 
 
 # GBN header is coming after the IP header
@@ -193,69 +193,68 @@ class GBNReceiver(Automaton):
             # the ack will be received correctly
             else:
 
-            	#If SACK is not supported
-            	if pkt.getlayer(GBN).options == 0:
-	                header_GBN = GBN(type="ack",
-	                                 options=0,
-	                                 len=0,
-	                                 hlen=6,
-	                                 num=self.next,
-	                                 win=self.win)
+                #If SACK is not supported
+                if pkt.getlayer(GBN).options == 0:
+                    header_GBN = GBN(type="ack",
+                                     options=0,
+                                     len=0,
+                                     hlen=6,
+                                     num=self.next,
+                                     win=self.win)
 
-	                log.debug("Sending ACK: %s" % self.next)
-	                send(IP(src=self.receiver, dst=self.sender) / header_GBN,
-	                     verbose=0)
-	            
-	            #If SACK is supported
-	        	else:
-	            	
-	            	first = True
-	            	x = self.next
-	            	#Iterate over all possible SACK blocks.
-	            	for i in range(3):
-	            		#If nothing more left to ACK
-	            		if x > max(self.buffer.keys()):
-	            			break
-		            	
-		            	#Generate contigious blocks
-		            	while True:
-		            		if x in self.buffer:
-		            			if first:
-		            				sackstart[i] = x
-		            				prev = x
-		            				sacklen[i] = 1
-		            				first = False
-		            			elif x = prev + 1:
-		            				sacklen[i] += 1
-		            				prev = x
-		            		elif !first:
-		            			break
-		            		x += 1
-		            	first = True
+                    log.debug("Sending ACK: %s" % self.next)
+                    send(IP(src=self.receiver, dst=self.sender) / header_GBN,
+                         verbose=0)
+                
+                #If SACK is supported
+                else:
+                       
+                    first = True
+                    x = self.next
+                    #Iterate over all possible SACK blocks.
+                    for i in range(3):
+                          #If nothing more left to ACK
+                        if x > max(self.buffer.keys()):
+                            break                            
+                        #Generate contigious blocks
+                        while True:
+                            if x in self.buffer:
+                                if first:
+                                    sackstart[i] = x
+                                    prev = x
+                                    sacklen[i] = 1
+                                    first = False
+                                elif x = prev + 1:
+                                    sacklen[i] += 1
+                                    prev = x
+                                elif !first:
+                                    break
+                            x += 1
+                        first = True
 
-		            sackcnt = len(sackstart)
-		            header_GBN = GBN(type="ack",
-	                                 options=1,
-	                                 len=0,
-	                                 hlen=6 + 3*len(sackstart),
-	                                 num=self.next,
-	                                 win=self.win,
-	                                 )
-		            #Add SACK fields as needed
-		            if sackcnt >= 1:
-		            	header_GBN.sackcnt = sackcnt
-		            	header_GBN.sackstart1 = sackstart[0]
-		            	header_GBN.sacklen1 = sacklen[0]
-		            	if sackcnt >= 2:
-		            		header_GBN.sackstart2 = sackstart[1]
-		            		header_GBN.sacklen2 = sacklen[1]
-		            		if sackcnt >= 2:
-			            		header_GBN.sackstart3 = sackstart[2]
-			            		header_GBN.sacklen3 = sacklen[2]
+                    sackcnt = len(sackstart)
+                    header_GBN = GBN(type="ack",
+                                     options=1,
+                                     len=0,
+                                     hlen=6 + 3*len(sackstart),
+                                     num=self.next,
+                                     win=self.win,
+                                     )
+                    #Add SACK fields as needed
+                    if sackcnt >= 1:
+                        header_GBN.sackcnt = sackcnt
+                        header_GBN.sackstart1 = sackstart[0]
+                        header_GBN.sacklen1 = sacklen[0]
+                        if sackcnt >= 2:
+                            header_GBN.sackstart2 = sackstart[1]
+                            header_GBN.sacklen2 = sacklen[1]
+                            if sackcnt >= 2:
+                                header_GBN.sackstart3 = sackstart[2]
+                                header_GBN.sacklen3 = sacklen[2]
 
-	                log.debug("Sending ACK: %s; SACK count: %s" % self.next, sackcnt)
-	                send(IP(src=self.receiver, dst=self.sender) / header_GBN,
-	                     verbose=0)
+                    log.debug("Sending ACK: %s; SACK count: %s" % self.next, sackcnt)
+                    send(IP(src=self.receiver, dst=self.sender) / header_GBN,
+                         verbose=0)
 
 
 
