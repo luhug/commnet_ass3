@@ -224,7 +224,7 @@ class GBNReceiver(Automaton):
                                     prev = x
                                     sacklen[i] = 1
                                     first = False
-                                elif x = prev + 1:
+                                elif x == prev + 1:
                                     sacklen[i] += 1
                                     prev = x
                                 elif !first:
