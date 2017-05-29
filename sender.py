@@ -127,7 +127,7 @@ class GBNSender(Automaton):
                 log.debug("Sending packet num: %s" % self.current)
 
                 # add the current segment to the payload and SACK buffer
-                self.buffer[self.current] = payload
+                self.buffer[self.current + wrapcount] = payload
                 log.debug("Adding %s to buffer" % self.current)
                 log.debug("Current buffer size: %s" % len(self.buffer))
                 
@@ -249,7 +249,7 @@ class GBNSender(Automaton):
                                   + range(pkt.getlayer(GBN).sackstart2,pkt.getlayer(GBN).sackstart2+pkt.getlayer(GBN).sacklen2)
                                   + range(pkt.getlayer(GBN).sackstart3,pkt.getlayer(GBN).sackstart3+pkt.getlayer(GBN).sacklen3))
                     for x in range(0,last):
-                        if (~(x in sacklist)) and x in self.buffer:
+                        if (~(x in sacklist)) and (x in self.buffer):
                             log.debug("SACK trigerred for packet %s. Sack List: %s" , x, str(sacklist))
                             header_GBN = GBN(type='data',
                                          options=1,
