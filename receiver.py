@@ -210,24 +210,24 @@ class GBNReceiver(Automaton):
                 else:
                     log.debug("Starting SACK procedure")
                     first = True
-                    x = self.next #We must start from 0 because of wraparound
+                    x = 0 #We must start from 0 because of wraparound
                     #Iterate over all possible SACK blocks.
                     sackstart = list()
                     sacklen = list()
                     for i in range(3):
                           #If nothing more left to ACK
-                        if len(self.buffer.keys()) == 0 or x > max(self.buffer.keys()):
+                        if len(self.buffer.keys()) == 0 or x > 2**self.n_bits:
                             break                            
                         #Generate contigious blocks
                         
-                        while x <= max(self.buffer.keys()):
+                        while x < 2**n_bits:
                             if x in self.buffer:
                                 if first:
                                     sackstart.append(x)
                                     prev = x
                                     sacklen.append(1)
                                     first = False
-                                elif x == prev + 1:
+                                elif x == prev + 1: #wraparound handling
                                     sacklen[i] += 1
                                     prev = x
                                 elif ~first:

@@ -124,7 +124,7 @@ class GBNSender(Automaton):
                 log.debug("Sending packet num: %s" % self.current)
 
                 # add the current segment to the payload and SACK buffer
-                self.buffer[self.current] = payload
+                self.buffer[self.current % 2**self.n_bits] = payload
                 log.debug("Adding %s to buffer" % self.current)
                 log.debug("Current buffer size: %s" % len(self.buffer))
                 
@@ -246,7 +246,7 @@ class GBNSender(Automaton):
                         sacklist = (range(pkt.getlayer(GBN).sackstart1,pkt.getlayer(GBN).sackstart1+pkt.getlayer(GBN).sacklen1)
                                   + range(pkt.getlayer(GBN).sackstart2,pkt.getlayer(GBN).sackstart2+pkt.getlayer(GBN).sacklen2)
                                   + range(pkt.getlayer(GBN).sackstart3,pkt.getlayer(GBN).sackstart3+pkt.getlayer(GBN).sacklen3))
-                    for x in range(ack,last): #We must start from 0 because of wraparound
+                    for x in range(0,last): #We must start from 0 because of wraparound
                         if ~(x in sacklist):
                             log.debug("SACK trigerred for packet %s. Retransmitting..." % x)
                             header_GBN = GBN(type='data',
