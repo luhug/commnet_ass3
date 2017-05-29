@@ -123,6 +123,7 @@ class GBNSender(Automaton):
                 # get next payload (automatically removes it from queue)
                 if self.current == 0:
                     self.wrapcount += 2**self.n_bits
+                    log.debug("Wraparound Offset is now %s" % self.wrapcount)
                 payload = self.q.get(block=False)
                 log.debug("Sending packet num: %s" % self.current)
 
