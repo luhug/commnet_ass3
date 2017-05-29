@@ -210,7 +210,7 @@ class GBNReceiver(Automaton):
                 else:
                     log.debug("Starting SACK procedure")
                     first = True
-                    x = self.next
+                    x = self.next #We must start from 0 because of wraparound
                     #Iterate over all possible SACK blocks.
                     sackstart = list()
                     sacklen = list()
