@@ -214,7 +214,7 @@ class GBNReceiver(Automaton):
                     #Iterate over all possible SACK blocks.
                     for i in range(3):
                           #If nothing more left to ACK
-                        if x > max(self.buffer.keys()):
+                        if len(self.buffer.keys()) == 0 or x > max(self.buffer.keys()):
                             break                            
                         #Generate contigious blocks
                         while True:
@@ -227,7 +227,7 @@ class GBNReceiver(Automaton):
                                 elif x == prev + 1:
                                     sacklen[i] += 1
                                     prev = x
-                                elif ~first:
+                                elif first:
                                     break
                             x += 1
                         first = True
