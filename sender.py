@@ -127,7 +127,7 @@ class GBNSender(Automaton):
                 log.debug("Sending packet num: %s" % self.current)
 
                 # add the current segment to the payload and SACK buffer
-                self.buffer[self.current + wrapcount] = payload
+                self.buffer[self.current + self.wrapcount] = payload
                 log.debug("Adding %s to buffer" % self.current)
                 log.debug("Current buffer size: %s" % len(self.buffer))
                 
