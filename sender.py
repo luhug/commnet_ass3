@@ -36,7 +36,16 @@ class GBN(Packet):
                    ShortField("len", None),
                    ByteField("hlen", 0),
                    ByteField("num", 0),
-                   ByteField("win", 0)]
+                   ByteField("win", 0)
+                   ConditionalField(ByteField("sackcnt",0), lambda pkt:(pkt.hlen > 6 && pkt.options == 1))
+                   ConditionalField(ByteField("sackstart1",0), lambda pkt:pkt.sackcnt >= 1)
+                   ConditionalField(ByteField("sacklen1",0), lambda pkt:pkt.sackcnt >= 1)
+                   ConditionalField(ByteField("pad2",0), lambda pkt:pkt.sackcnt >= 2)
+                   ConditionalField(ByteField("sackstart2",0), lambda pkt:pkt.sackcnt >= 2)
+                   ConditionalField(ByteField("sacklen2",0), lambda pkt:pkt.sackcnt >= 2)
+                   ConditionalField(ByteField("pad3",0), lambda pkt:pkt.sackcnt >= 3)
+                   ConditionalField(ByteField("sackstart3",0), lambda pkt:pkt.sackcnt >= 3)
+                   ConditionalField(ByteField("sacklen3",0), lambda pkt:pkt.sackcnt >= 3)]
 
 
 # GBN header is coming after the IP header
@@ -126,7 +135,8 @@ class GBNSender(Automaton):
                 # and the corresponding payload                               #
                 ###############################################################
                 #TASK 3.1
-                header_GBN = GBN(type='data',options=0,len=len(payload),hlen=6,num=self.current,win=self.win)
+
+                header_GBN = GBN(type='data',options=self.Q_3_3,len=len(payload),hlen=6,num=self.current,win=self.win)
                 send(IP(src=self.sender, dst=self.receiver) / header_GBN / payload)
 
 
@@ -219,6 +229,34 @@ class GBNSender(Automaton):
                     else: #[3.2.2] In this case we cannot retransmit the packet as it has already been deleted from the buffer
                         log.error("Packet already acknowledged: %s" % ack)
                         log.debug("Buffer is %s" % str(self.buffer.keys()))
+
+                elif self.Q_3_3 and pkt.getlayer(GBN).options == 1:
+                     
+                    if pkt.getlayer(GBN).sackcnt == 1:
+                        last = pkt.getlayer(GBN).sackstart1
+                        sacklist = range(pkt.getlayer(GBN).sackstart1,pkt.getlayer(GBN).sackstart1+pkt.getlayer(GBN).sacklen1)
+                        
+                    elif pkt.getlayer(GBN).sackcnt == 2:
+                        last = pkt.getlayer(GBN).sackstart2
+                        sacklist = (range(pkt.getlayer(GBN).sackstart1,pkt.getlayer(GBN).sackstart1+pkt.getlayer(GBN).sacklen1)
+                                  + range(pkt.getlayer(GBN).sackstart2,pkt.getlayer(GBN).sackstart2+pkt.getlayer(GBN).sacklen2))
+
+                    elif pkt.getlayer(GBN).sackcnt == 3:
+                        last = pkt.getlayer(GBN).sackstart2
+                        sacklist = (range(pkt.getlayer(GBN).sackstart1,pkt.getlayer(GBN).sackstart1+pkt.getlayer(GBN).sacklen1)
+                                  + range(pkt.getlayer(GBN).sackstart2,pkt.getlayer(GBN).sackstart2+pkt.getlayer(GBN).sacklen2)
+                                  + range(pkt.getlayer(GBN).sackstart3,pkt.getlayer(GBN).sackstart3+pkt.getlayer(GBN).sacklen3))
+                    for x in range(ack,last):
+                        if ~(x in sacklist):
+                            log.debug("SACK trigerred for packet %s. Retransmitting..." % x)
+                            header_GBN = GBN(type='data',
+                                         options=1,
+                                         len=len(self.buffer[x]),
+                                         hlen=6,
+                                         num=ack,
+                                         win=self.win)
+                            send(IP(src=self.sender, dst=self.receiver) / header_GBN / self.buffer[x])
+
 
         # back to SEND state
         raise self.SEND()
