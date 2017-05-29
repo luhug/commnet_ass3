@@ -28,7 +28,7 @@ RECEIVER_FILE="receiver.py"
 SENDER_FILE="sender.py"
 
 # Parameters for sender and receiver
-NBITS=5                    # The number of bits used to encode the sequence number
+NBITS=3                    # The number of bits used to encode the sequence number
 
 # Parameters for sender
 IN_FILE=sample_text.txt    # Data to transmit (e.g. sample_text.txt or ETH_logo.png)

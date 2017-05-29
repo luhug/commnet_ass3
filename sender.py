@@ -246,7 +246,7 @@ class GBNSender(Automaton):
                         sacklist = (range(pkt.getlayer(GBN).sackstart1,pkt.getlayer(GBN).sackstart1+pkt.getlayer(GBN).sacklen1)
                                   + range(pkt.getlayer(GBN).sackstart2,pkt.getlayer(GBN).sackstart2+pkt.getlayer(GBN).sacklen2)
                                   + range(pkt.getlayer(GBN).sackstart3,pkt.getlayer(GBN).sackstart3+pkt.getlayer(GBN).sacklen3))
-                    for x in range(ack,last):
+                    for x in range(last): #We must start from 0 because of wraparound
                         if ~(x in sacklist):
                             log.debug("SACK trigerred for packet %s. Retransmitting..." % x)
                             header_GBN = GBN(type='data',

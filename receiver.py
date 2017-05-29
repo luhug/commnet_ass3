@@ -255,7 +255,7 @@ class GBNReceiver(Automaton):
                                 header_GBN.sackstart3 = sackstart[2]
                                 header_GBN.sacklen3 = sacklen[2]
 
-                    log.debug("Sending SACK: %s; Buffer: %s" , self.next, str(self.buffer))
+                    log.debug("Sending SACK: %s; Buffer: %s" , self.next, str(self.buffer.keys()))
                     send(IP(src=self.receiver, dst=self.sender) / header_GBN,
                          verbose=0)
 
