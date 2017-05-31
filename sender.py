@@ -90,8 +90,6 @@ class GBNSender(Automaton):
         self.SACK = Q_3_3
         self.Q_3_4 = Q_3_4
         self.srcounter = {} #Count how often a packet has been acknowledged
-        self.wrapcount = -2**self.n_bits #hack but works
-        self.wrapcount2 = 0
 
     def master_filter(self, pkt):
         """Filter packts of interest.
@@ -123,14 +121,11 @@ class GBNSender(Automaton):
         if len(self.buffer) < min(self.win, self.receiver_win):
             try:
                 # get next payload (automatically removes it from queue)
-                if self.current == 0:
-                    self.wrapcount += 2**self.n_bits
-                    log.debug("Wraparound Offset is now %s" % self.wrapcount)
                 payload = self.q.get(block=False)
                 log.debug("Sending packet num: %s" % self.current)
 
                 # add the current segment to the payload and SACK buffer
-                self.buffer[self.current + self.wrapcount] = payload
+                self.buffer[self.current] = payload
                 log.debug("Adding %s to buffer" % self.current)
                 
                 
@@ -208,12 +203,12 @@ class GBNSender(Automaton):
                 # remove all the acknowledged sequence numbers from buffer #
                 ############################################################
                 #[3.1] Delete all elements from buffer with sequence numbers < ack
-                for x in range(ack + self.wrapcount2):
+                x = ack + self.win
+                while x != ack - 1:
                     if x in self.buffer:
                         del self.buffer[x]
-                        if min(self.buffer.keys()) >= self.wrapcount:
-                            self.wrapcount2 = self.wrapcount
                         log.debug("Removing %s from buffer" % x)
+                    x = (x+1)%2**self.n_bits
 
                 # set self.unack to the first not acknowledged packet
                 self.unack = ack
@@ -223,15 +218,15 @@ class GBNSender(Automaton):
                 # SACK question...
                 #[3.2.2] if packet was acknowledged >= 3 times since last retransmit, retransmit the packet
                 if self.Q_3_2 and self.srcounter[ack] >= 3:
-                    if ack + self.wrapcount in self.buffer:
+                    if ack in self.buffer:
                         log.debug("Selective repeat trigerred for packet %s. Retransmitting..." % ack)
                         header_GBN = GBN(type='data',
                                          options=0,
-                                         len=len(self.buffer[ack + self.wrapcount]),
+                                         len=len(self.buffer[ack]),
                                          hlen=6,
                                          num=ack,
                                          win=self.win)
-                        send(IP(src=self.sender, dst=self.receiver) / header_GBN / self.buffer[ack + self.wrapcount])
+                        send(IP(src=self.sender, dst=self.receiver) / header_GBN / self.buffer[ack])
                     else: #[3.2.2] In this case we cannot retransmit the packet as it has already been deleted from the buffer
                         log.error("Packet already acknowledged: %s" % ack)
                         log.debug("Buffer is %s" % str(self.buffer.keys()))
@@ -239,30 +234,53 @@ class GBNSender(Automaton):
                 elif self.SACK and pkt.getlayer(GBN).options == 1:
                     last=0
                     sacklist = list()
-                    if pkt.getlayer(GBN).sackcnt == 1:
-                        last = pkt.getlayer(GBN).sackstart1 + self.wrapcount
-                        sacklist = range(pkt.getlayer(GBN).sackstart1,pkt.getlayer(GBN).sackstart1+pkt.getlayer(GBN).sacklen1)
+                    
+                    # if pkt.getlayer(GBN).sackcnt == 1:
+                    #     last = pkt.getlayer(GBN).sackstart1 + self.wrapcount
+                    #     sacklist = range(pkt.getlayer(GBN).sackstart1,pkt.getlayer(GBN).sackstart1+pkt.getlayer(GBN).sacklen1)
 
-                    elif pkt.getlayer(GBN).sackcnt == 2:
-                        last = pkt.getlayer(GBN).sackstart2 + self.wrapcount
-                        sacklist = (range(pkt.getlayer(GBN).sackstart1,pkt.getlayer(GBN).sackstart1+pkt.getlayer(GBN).sacklen1)
-                                  + range(pkt.getlayer(GBN).sackstart2,pkt.getlayer(GBN).sackstart2+pkt.getlayer(GBN).sacklen2))
+                    # elif pkt.getlayer(GBN).sackcnt == 2:
+                    #     last = pkt.getlayer(GBN).sackstart2 + self.wrapcount
+                    #     sacklist = (range(pkt.getlayer(GBN).sackstart1,pkt.getlayer(GBN).sackstart1+pkt.getlayer(GBN).sacklen1)
+                    #               + range(pkt.getlayer(GBN).sackstart2,pkt.getlayer(GBN).sackstart2+pkt.getlayer(GBN).sacklen2))
 
-                    elif pkt.getlayer(GBN).sackcnt == 3:
-                        last = pkt.getlayer(GBN).sackstart3 + self.wrapcount
-                        sacklist = (range(pkt.getlayer(GBN).sackstart1,pkt.getlayer(GBN).sackstart1+pkt.getlayer(GBN).sacklen1)
-                                  + range(pkt.getlayer(GBN).sackstart2,pkt.getlayer(GBN).sackstart2+pkt.getlayer(GBN).sacklen2)
-                                  + range(pkt.getlayer(GBN).sackstart3,pkt.getlayer(GBN).sackstart3+pkt.getlayer(GBN).sacklen3))
+                    # elif pkt.getlayer(GBN).sackcnt == 3:
+                    #     last = pkt.getlayer(GBN).sackstart3 + self.wrapcount
+                    #     sacklist = (range(pkt.getlayer(GBN).sackstart1,pkt.getlayer(GBN).sackstart1+pkt.getlayer(GBN).sacklen1)
+                    #               + range(pkt.getlayer(GBN).sackstart2,pkt.getlayer(GBN).sackstart2+pkt.getlayer(GBN).sacklen2)
+                    #               + range(pkt.getlayer(GBN).sackstart3,pkt.getlayer(GBN).sackstart3+pkt.getlayer(GBN).sacklen3))
+
+                    if pkt.getlayer(GBN).sackcnt >= 1:
+                        sacklen = pkt.getlayer(GBN).sacklen1
+                        sackstart = pkt.getlayer(GBN).sackstart1
+                        while sacklen > 0
+                            sacklist.append(sackstart)
+                            sackstart = (sackstart+1) % 2**self.n_bits
+                            sacklen -= 1
+                        if pkt.getlayer(GBN).sackcnt >= 2:
+                            sacklen = pkt.getlayer(GBN).sacklen2
+                            sackstart = pkt.getlayer(GBN).sackstart2
+                            while sacklen > 0
+                                sacklist.append(sackstart)
+                                sackstart = (sackstart+1) % 2**self.n_bits
+                                sacklen -= 1
+                            if pkt.getlayer(GBN).sackcnt >= 3:
+                                sacklen = pkt.getlayer(GBN).sacklen3
+                                sackstart = pkt.getlayer(GBN).sackstart3
+                                while sacklen > 0
+                                    sacklist.append(sackstart)
+                                    sackstart = (sackstart+1) % 2**self.n_bits
+                                    sacklen -= 1
 
 
                     for x in self.buffer.keys():
-                        if x % 2**self.n_bits in sacklist:
+                        if x in sacklist:
                             del self.buffer[x]
                             if min(self.buffer.keys()) >= self.wrapcount:
                                 self.wrapcount2 = self.wrapcount
 
                     for x in range(ack,last):
-                        if (x % 2**self.n_bits not in sacklist) and (x in self.buffer):
+                        if (x not in sacklist) and (x in self.buffer):
                             log.debug("SACK trigerred for packet %s. Sack List: %s" , x, str(sacklist))
                             header_GBN = GBN(type='data',
                                          options=1,
