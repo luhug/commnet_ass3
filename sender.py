@@ -276,8 +276,6 @@ class GBNSender(Automaton):
                     for x in self.buffer.keys():
                         if x in sacklist:
                             del self.buffer[x]
-                            if min(self.buffer.keys()) >= self.wrapcount:
-                                self.wrapcount2 = self.wrapcount
 
                     for x in range(ack,last):
                         if (x not in sacklist) and (x in self.buffer):
