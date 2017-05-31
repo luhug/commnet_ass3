@@ -33,7 +33,7 @@ X=25
 # 3: sender Q3.2 (Selective Repeat)
 # 4: receiver Q3.3 (SACK header generation)
 # 5: sender Q3.3 (retransmission after receiving SACK header)
-TEST_NUM=1
+TEST_NUM=2
 
 # Filenames of receiver and sender implementation
 RECEIVER_FILE="receiver.py"
