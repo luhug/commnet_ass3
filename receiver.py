@@ -171,8 +171,7 @@ class GBNReceiver(Automaton):
                         self.next = int((self.next + 1) % 2**self.n_bits)
                                         
                 # this was not the expected segment but is in recieving window
-                elif ((pkt.getlayer(GBN).num > self.next and pkt.getlayer(GBN).num < self.next + self.win) 
-                     or ((self.next+self.win)>=2**self.n_bits and pkt.getlayer(GBN).num < (self.next+self.win)%2**self.n_bits):
+                elif ((pkt.getlayer(GBN).num > self.next and pkt.getlayer(GBN).num < self.next + self.win) or ((self.next+self.win)>=2**self.n_bits and pkt.getlayer(GBN).num < (self.next+self.win)%2**self.n_bits):
                     log.debug("Out of sequence segment [num = %s] received. "
                               "Expected %s", pkt.getlayer(GBN).num, self.next)
                     #[3.2.1] Write packet to buffer if not already in buffer
