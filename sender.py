@@ -131,7 +131,12 @@ class GBNSender(Automaton):
                 ############
                 #TASK [3.1]#
                 ############
-                header_GBN = GBN(type='data',options=self.SACK,len=len(payload),hlen=6,num=self.current,win=self.win)
+                header_GBN = GBN(type='data',
+                                 options=self.SACK,
+                                 len=len(payload),
+                                 hlen=6,
+                                 num=self.current,
+                                 win=self.win)
                 send(IP(src=self.sender, dst=self.receiver) / header_GBN / payload)
 
                 # sequence number of next packet
