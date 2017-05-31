@@ -90,6 +90,7 @@ class GBNReceiver(Automaton):
         self.end_num = -1
         self.buffer = {}
         self.sacksize = 0
+        self.lastreceived = 0
 
     def master_filter(self, pkt):
         """Filter packts of interest.
@@ -123,6 +124,7 @@ class GBNReceiver(Automaton):
     def DATA_IN(self, pkt):
         """State for incoming data."""
         # received segment was lost/corrupted in the network
+        self.lastreceived = pkt.getlayer(GBN).num
         if random.random() < self.p_data:
             log.debug("Data segment lost: [type = %s num = %s win = %s]",
                       pkt.getlayer(GBN).type,
@@ -173,7 +175,7 @@ class GBNReceiver(Automaton):
                         self.next = int((self.next + 1) % 2**self.n_bits)
                                         
                 # this was not the expected segment but is in recieving window
-                elif ((pkt.getlayer(GBN).num > self.next and pkt.getlayer(GBN).num < self.next + self.sacksize + self.win) or ((self.next+self.sacksize + self.win)>=2**self.n_bits and pkt.getlayer(GBN).num < (self.next+self.sacksize+self.win)%2**self.n_bits)):
+                elif ((pkt.getlayer(GBN).num > self.next and pkt.getlayer(GBN).num < self.next + self.win) or ((self.next + self.win)>=2**self.n_bits and pkt.getlayer(GBN).num < (self.next+self.win)%2**self.n_bits)):
                     log.debug("Out of sequence segment [num = %s] received. "
                               "Expected %s", pkt.getlayer(GBN).num, self.next)
                     #[3.2.1] Write packet to buffer if not already in buffer
