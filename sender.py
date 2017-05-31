@@ -90,7 +90,6 @@ class GBNSender(Automaton):
         self.SACK = Q_3_3
         self.Q_3_4 = Q_3_4
         self.srcounter = {} #Count how often a packet has been acknowledged
-        self.newestsent = 0
 
     def master_filter(self, pkt):
         """Filter packts of interest.
@@ -134,7 +133,6 @@ class GBNSender(Automaton):
                 ############
                 header_GBN = GBN(type='data',options=self.SACK,len=len(payload),hlen=6,num=self.current,win=self.win)
                 send(IP(src=self.sender, dst=self.receiver) / header_GBN / payload)
-                self.newestsent = self.current
 
                 # sequence number of next packet
                 self.current = int((self.current + 1) % 2**self.n_bits)
