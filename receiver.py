@@ -231,10 +231,10 @@ class GBNReceiver(Automaton):
                                     prev = x
                                     sacklen.append(1)
                                     first = False
-                                elif x == prev + 1:
+                                elif x == (prev + 1)%2**n_bits:
                                     sacklen[i] += 1
                                     prev = x
-                                elif ~first:
+                                else:
                                     break
                             x = (x+1)%2**self.n_bits
                         first = True
