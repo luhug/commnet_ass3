@@ -262,7 +262,7 @@ class GBNSender(Automaton):
 
                         #Resend SACKed packets in correct order
                         x=ack
-                        while x != last
+                        while x != last:
                             if (x not in sacklist) and (x in self.buffer):
                                 log.debug("SACK trigerred for packet %s. Sack List: %s" , x, str(sacklist))
                                 header_GBN = GBN(type='data',
