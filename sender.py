@@ -299,17 +299,18 @@ class GBNSender(Automaton):
         # (all the packets currently in self.buffer) #
         ##############################################
         #TASK 3.1
-        for seqNr in self.buffer:
+        seqNr = self.unack
+        for seqNr in range(self.unack, 2**self.n_bits) + range(self.unack - 1):
+            if seqNr in self.buffer:
+                header_GBN = GBN(type='data',
+                                 options=0,
+                                 len=len(self.buffer[seqNr]),
+                                 hlen=6,num=seqNr,
+                                 win=self.win)
+                
+                send(IP(src=self.sender, dst=self.receiver) / header_GBN / self.buffer[seqNr])
 
-            header_GBN = GBN(type='data',
-                             options=0,
-                             len=len(self.buffer[seqNr]),
-                             hlen=6,num=seqNr,
-                             win=self.win)
-            
-            send(IP(src=self.sender, dst=self.receiver) / header_GBN / self.buffer[seqNr])
-
-            log.debug("Retransmit due to Timeout: %s" % seqNr)
+                log.debug("Retransmit due to Timeout: %s" % seqNr)
 
 
         # back to SEND state
