@@ -31,14 +31,14 @@ SENDER_FILE="sender.py"
 NBITS=8                    # The number of bits used to encode the sequence number
 
 # Parameters for sender
-IN_FILE=yldron_needsmore.jpg    # Data to transmit (e.g. sample_text.txt or ETH_logo.png)
+IN_FILE=to_send_test.txt    # Data to transmit (e.g. sample_text.txt or ETH_logo.png)
 SENDER_WIN_SIZE=128        # Window size of the sender
 Q_3_2=0                    # Use Selective Repeat implemented in question 3.2 (0 or 1)
 Q_3_3=1                    # Use Selective Acknowledgments implemented in question 3.3 (0 or 1)
 Q_3_4=0                    # Use Congestion Control implemented in question 3.4/Bonus (0 or 1)
 
 # Parameters for receiver
-OUT_FILE=out.jpg      # Output file for the received data from the sender
+OUT_FILE=out_test.txt     # Output file for the received data from the sender
 RECEIVER_WIN_SIZE=4        # Window size of the receiver
 DATA_L=0.2                   # Loss probability of data segments (between 0 and 1.0)
 ACK_L=0                    # Loss probability of ACKs (between 0 and 1.0)
