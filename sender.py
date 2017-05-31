@@ -129,16 +129,9 @@ class GBNSender(Automaton):
                 # add the current segment to the payload and SACK buffer
                 self.buffer[self.current] = payload
                 log.debug("Adding %s to buffer" % self.current)
-                
-                
-                ###############################################################
-                # TODO:                                                       #
-                # create a GBN header with the correct header field values    #
-                # send a packet to the receiver containing the created header #
-                # and the corresponding payload                               #
-                ###############################################################
-                #TASK 3.1
-
+                ############
+                #TASK [3.1]#
+                ############
                 header_GBN = GBN(type='data',options=self.SACK,len=len(payload),hlen=6,num=self.current,win=self.win)
                 send(IP(src=self.sender, dst=self.receiver) / header_GBN / payload)
                 self.newestsent = self.current
@@ -200,10 +193,6 @@ class GBNSender(Automaton):
             # ack packet has "good" sequence number
             if ack in good_ack:
 
-                ############################################################
-                # TODO:                                                    #
-                # remove all the acknowledged sequence numbers from buffer #
-                ############################################################
                 #[3.1] Delete all elements from buffer with sequence numbers < ack
                 x = (ack + self.win) % 2**self.n_bits
                 while x != ack:
@@ -216,8 +205,6 @@ class GBNSender(Automaton):
                 self.unack = ack
 
             else:
-                # could be interesting for the selective repeat question or the
-                # SACK question...
                 #[3.2.2] if packet was acknowledged >= 3 times since last retransmit, retransmit the packet
                 if self.Q_3_2 and self.srcounter[ack] >= 3:
                     if ack in self.buffer:
@@ -234,13 +221,18 @@ class GBNSender(Automaton):
                         log.debug("Buffer is %s" % str(self.buffer.keys()))
 
                 elif self.SACK and pkt.getlayer(GBN).options == 1:
+                    ############################
+                    #[3.3.2] Handle SACK header#
+                    ############################
                     
-                    sacklist = list()
 
+                    #From the data given in the packet, construct a list object
+                    #containing all packet seq.nr.'s acknowledged by SACK
+                    sacklist = list()
                     if pkt.getlayer(GBN).sackcnt >= 1:
                         sacklen = pkt.getlayer(GBN).sacklen1
                         sackstart = pkt.getlayer(GBN).sackstart1
-                        last = sackstart
+                        last = sackstart #This is needed for a later loop. It is the first sequence number of the last SACK block.
                         while sacklen > 0:
                             sacklist.append(sackstart)
                             sackstart = (sackstart+1) % 2**self.n_bits
@@ -263,11 +255,14 @@ class GBNSender(Automaton):
                                     sacklen -= 1
 
 
+                        #Remove all acknowledged packets from buffer
                         for x in self.buffer.keys():
                             if x in sacklist:
                                 del self.buffer[x]
 
-                        for x in range(ack,last):
+                        #Resend SACKed packets in correct order
+                        x=ack
+                        while x != last
                             if (x not in sacklist) and (x in self.buffer):
                                 log.debug("SACK trigerred for packet %s. Sack List: %s" , x, str(sacklist))
                                 header_GBN = GBN(type='data',
@@ -277,6 +272,7 @@ class GBNSender(Automaton):
                                              num=x % (2**self.n_bits),
                                              win=self.win)
                                 send(IP(src=self.sender, dst=self.receiver) / header_GBN / self.buffer[x])
+                            x = (x+1)%2**self.n_bits
 
                     
 

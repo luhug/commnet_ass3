@@ -88,9 +88,7 @@ class GBNReceiver(Automaton):
         self.p_size = chunk_size
         self.end_receiver = False
         self.end_num = -1
-        self.buffer = {}
-        self.sacksize = 0
-        self.lastreceived = 0
+        self.buffer = {} #Receiving buffer initialized as empty dictionary
 
     def master_filter(self, pkt):
         """Filter packts of interest.
@@ -124,7 +122,6 @@ class GBNReceiver(Automaton):
     def DATA_IN(self, pkt):
         """State for incoming data."""
         # received segment was lost/corrupted in the network
-        self.lastreceived = pkt.getlayer(GBN).num
         if random.random() < self.p_data:
             log.debug("Data segment lost: [type = %s num = %s win = %s]",
                       pkt.getlayer(GBN).type,
@@ -171,7 +168,7 @@ class GBNReceiver(Automaton):
                         result.close()
                         log.debug("Delivered packet to upper layer: %s",
                                   self.next)
-                        del self.buffer[self.next] #Prevent memory leak
+                        del self.buffer[self.next] #Delete Packet from buffer after it is written
                         self.next = int((self.next + 1) % 2**self.n_bits)
                                         
                 # this was not the expected segment but is in recieving window
@@ -212,6 +209,9 @@ class GBNReceiver(Automaton):
                 
                 #If SACK is supported
                 else:
+                    ##############################
+                    #[3.3.1] Generate SACK Blocks#
+                    ##############################
                     log.debug("Starting SACK procedure")
                     first = True
                     x = self.next
@@ -219,27 +219,28 @@ class GBNReceiver(Automaton):
                     sackstart = list()
                     sacklen = list()
                     for i in range(3):
-                        #If nothing more left to ACK
+                        #If buffer is empty, we need to SACK nothing
                         if len(self.buffer.keys()) == 0:
-                            break                            
-                        #Generate contigious blocks
-                        
+                            break
+
+                        #Generate contigious blocks, Start from self.next and wrap back around to self.next-1, so the order is right
+                        #We don't reset x after the while loop, so it continues where we left off 
                         while x != (self.next - 1) % 2**self.n_bits:
                             if x in self.buffer:
-                                if first:
+                                if first: #First element in SACK block
                                     sackstart.append(x)
                                     prev = x
                                     sacklen.append(1)
                                     first = False
-                                elif x == (prev + 1)%2**n_bits:
+                                elif x == (prev + 1)%2**n_bits: #Continue SACK block
                                     sacklen[i] += 1
                                     prev = x
-                                else:
-                                    break
+                                else: #SACK block has ended
+                                    break 
                             x = (x+1)%2**self.n_bits
                         first = True
 
-                    sackcnt = len(sackstart)
+                    sackcnt = len(sackstart) #Number of SACK blocks
                     header_GBN = GBN(type="ack",
                                      options=1,
                                      len=0,
@@ -247,8 +248,8 @@ class GBNReceiver(Automaton):
                                      num=self.next,
                                      win=self.win,
                                      )
-                    #Add SACK fields as needed
-                    self.sacksize = sum(sacklen)
+                    
+                    #Convert to format used in Packet
                     if sackcnt >= 1:
                         header_GBN.sackcnt = sackcnt
                         header_GBN.sackstart1 = sackstart[0]
