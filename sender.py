@@ -253,21 +253,21 @@ class GBNSender(Automaton):
                     if pkt.getlayer(GBN).sackcnt >= 1:
                         sacklen = pkt.getlayer(GBN).sacklen1
                         sackstart = pkt.getlayer(GBN).sackstart1
-                        while sacklen > 0
+                        while sacklen > 0:
                             sacklist.append(sackstart)
                             sackstart = (sackstart+1) % 2**self.n_bits
                             sacklen -= 1
                         if pkt.getlayer(GBN).sackcnt >= 2:
                             sacklen = pkt.getlayer(GBN).sacklen2
                             sackstart = pkt.getlayer(GBN).sackstart2
-                            while sacklen > 0
+                            while sacklen > 0:
                                 sacklist.append(sackstart)
                                 sackstart = (sackstart+1) % 2**self.n_bits
                                 sacklen -= 1
                             if pkt.getlayer(GBN).sackcnt >= 3:
                                 sacklen = pkt.getlayer(GBN).sacklen3
                                 sackstart = pkt.getlayer(GBN).sackstart3
-                                while sacklen > 0
+                                while sacklen > 0:
                                     sacklist.append(sackstart)
                                     sackstart = (sackstart+1) % 2**self.n_bits
                                     sacklen -= 1
