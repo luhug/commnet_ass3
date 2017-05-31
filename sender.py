@@ -119,6 +119,7 @@ class GBNSender(Automaton):
         """
         log.debug("Current sending buffer: %s" % str(self.buffer.keys()))
         # check if you still can send new packets to the receiver
+        log.debug("Current: %s Unack: %s" , str(self.current),str(self.unack))
         if len(self.buffer) < min(self.win, self.receiver_win) and self.current < (self.unack + self.win) % 2**n_bits:
             try:
                 # get next payload (automatically removes it from queue)
