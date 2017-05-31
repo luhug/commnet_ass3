@@ -132,7 +132,7 @@ class GBNSender(Automaton):
                 #TASK [3.1]#
                 ############
                 header_GBN = GBN(type='data',
-                                 options=self.SACK,
+                                 options=self.SACK, #1 if SACK is supported, 0 otherwise
                                  len=len(payload),
                                  hlen=6,
                                  num=self.current,
@@ -219,6 +219,7 @@ class GBNSender(Automaton):
                                          num=ack,
                                          win=self.win)
                         send(IP(src=self.sender, dst=self.receiver) / header_GBN / self.buffer[ack])
+                        del self.srcounter[ack]
                     else: #[3.2.2] In this case we cannot retransmit the packet as it has already been deleted from the buffer
                         log.error("Packet already acknowledged: %s" % ack)
                         log.debug("Buffer is %s" % str(self.buffer.keys()))
@@ -292,11 +293,7 @@ class GBNSender(Automaton):
     @ATMT.state()
     def RETRANSMIT(self):
 
-        ##############################################
-        # TODO:                                      #
-        # retransmit all the unacknowledged packets  #
-        # (all the packets currently in self.buffer) #
-        ##############################################
+
         #TASK 3.1
         seqNr = self.unack
         for seqNr in range(self.unack, 2**self.n_bits) + range(self.unack - 1):
