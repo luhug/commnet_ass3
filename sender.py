@@ -205,7 +205,7 @@ class GBNSender(Automaton):
                 ############################################################
                 #[3.1] Delete all elements from buffer with sequence numbers < ack
                 x = (self.newestsent + 1) % 2**self.n_bits
-                while x != (ack - 1) % 2**self.n_bits:
+                while x != ack % 2**self.n_bits:
                     if x in self.buffer:
                         del self.buffer[x]
                         log.debug("Removing %s from buffer" % x)
