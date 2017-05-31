@@ -90,6 +90,7 @@ class GBNSender(Automaton):
         self.SACK = Q_3_3
         self.Q_3_4 = Q_3_4
         self.srcounter = {} #Count how often a packet has been acknowledged
+        self.newestsent = 0
 
     def master_filter(self, pkt):
         """Filter packts of interest.
@@ -116,8 +117,10 @@ class GBNSender(Automaton):
         New packets are transmitted to the receiver as long as there is space
         in the window.
         """
+        log.debug("Current sending buffer: %s" % str(self.buffer.keys()))
         # check if you still can send new packets to the receiver
-        if len(self.buffer) < min(self.win, self.receiver_win):
+        log.debug("Current: %s Unack: %s" , str(self.current),str(self.unack))
+        if len(self.buffer) < min(self.win, self.receiver_win) and (self.current - self.unack)%2**n_bits < self.win:
             try:
                 # get next payload (automatically removes it from queue)
                 payload = self.q.get(block=False)
@@ -126,19 +129,12 @@ class GBNSender(Automaton):
                 # add the current segment to the payload and SACK buffer
                 self.buffer[self.current] = payload
                 log.debug("Adding %s to buffer" % self.current)
-                log.debug("Current buffer size: %s" % len(self.buffer))
-                
-                ###############################################################
-                # TODO:                                                       #
-                # create a GBN header with the correct header field values    #
-                # send a packet to the receiver containing the created header #
-                # and the corresponding payload                               #
-                ###############################################################
-                #TASK 3.1
-
-                header_GBN = GBN(type='data',options=self.Q_3_3,len=len(payload),hlen=6,num=self.current,win=self.win)
+                ############
+                #TASK [3.1]#
+                ############
+                header_GBN = GBN(type='data',options=self.SACK,len=len(payload),hlen=6,num=self.current,win=self.win)
                 send(IP(src=self.sender, dst=self.receiver) / header_GBN / payload)
-
+                self.newestsent = self.current
 
                 # sequence number of next packet
                 self.current = int((self.current + 1) % 2**self.n_bits)
@@ -197,24 +193,18 @@ class GBNSender(Automaton):
             # ack packet has "good" sequence number
             if ack in good_ack:
 
-                ############################################################
-                # TODO:                                                    #
-                # remove all the acknowledged sequence numbers from buffer #
-                ############################################################
                 #[3.1] Delete all elements from buffer with sequence numbers < ack
-                for x in range(ack):
+                x = (ack + self.win) % 2**self.n_bits
+                while x != ack:
                     if x in self.buffer:
                         del self.buffer[x]
                         log.debug("Removing %s from buffer" % x)
-                    if x in self.srcounter:
-                        del self.srcounter[x] #[3.2.2] Reset counter for wraparound handling
+                    x = (x+1)%2**self.n_bits
 
                 # set self.unack to the first not acknowledged packet
                 self.unack = ack
 
             else:
-                # could be interesting for the selective repeat question or the
-                # SACK question...
                 #[3.2.2] if packet was acknowledged >= 3 times since last retransmit, retransmit the packet
                 if self.Q_3_2 and self.srcounter[ack] >= 3:
                     if ack in self.buffer:
@@ -231,32 +221,61 @@ class GBNSender(Automaton):
                         log.error("Packet already acknowledged: %s" % ack)
                         log.debug("Buffer is %s" % str(self.buffer.keys()))
 
-                elif self.Q_3_3 and pkt.getlayer(GBN).options == 1:
-                     
-                    if pkt.getlayer(GBN).sackcnt == 1:
-                        last = pkt.getlayer(GBN).sackstart1
-                        sacklist = range(pkt.getlayer(GBN).sackstart1,pkt.getlayer(GBN).sackstart1+pkt.getlayer(GBN).sacklen1)
+                elif self.SACK and pkt.getlayer(GBN).options == 1:
+                    ############################
+                    #[3.3.2] Handle SACK header#
+                    ############################
+                    
 
-                    elif pkt.getlayer(GBN).sackcnt == 2:
-                        last = pkt.getlayer(GBN).sackstart2
-                        sacklist = (range(pkt.getlayer(GBN).sackstart1,pkt.getlayer(GBN).sackstart1+pkt.getlayer(GBN).sacklen1)
-                                  + range(pkt.getlayer(GBN).sackstart2,pkt.getlayer(GBN).sackstart2+pkt.getlayer(GBN).sacklen2))
+                    #From the data given in the packet, construct a list object
+                    #containing all packet seq.nr.'s acknowledged by SACK
+                    sacklist = list()
+                    if pkt.getlayer(GBN).sackcnt >= 1:
+                        sacklen = pkt.getlayer(GBN).sacklen1
+                        sackstart = pkt.getlayer(GBN).sackstart1
+                        last = sackstart #This is needed for a later loop. It is the first sequence number of the last SACK block.
+                        while sacklen > 0:
+                            sacklist.append(sackstart)
+                            sackstart = (sackstart+1) % 2**self.n_bits
+                            sacklen -= 1
+                        if pkt.getlayer(GBN).sackcnt >= 2:
+                            sacklen = pkt.getlayer(GBN).sacklen2
+                            sackstart = pkt.getlayer(GBN).sackstart2
+                            last = sackstart
+                            while sacklen > 0:
+                                sacklist.append(sackstart)
+                                sackstart = (sackstart+1) % 2**self.n_bits
+                                sacklen -= 1
+                            if pkt.getlayer(GBN).sackcnt >= 3:
+                                sacklen = pkt.getlayer(GBN).sacklen3
+                                sackstart = pkt.getlayer(GBN).sackstart3
+                                last = sackstart
+                                while sacklen > 0:
+                                    sacklist.append(sackstart)
+                                    sackstart = (sackstart+1) % 2**self.n_bits
+                                    sacklen -= 1
 
-                    elif pkt.getlayer(GBN).sackcnt == 3:
-                        last = pkt.getlayer(GBN).sackstart2
-                        sacklist = (range(pkt.getlayer(GBN).sackstart1,pkt.getlayer(GBN).sackstart1+pkt.getlayer(GBN).sacklen1)
-                                  + range(pkt.getlayer(GBN).sackstart2,pkt.getlayer(GBN).sackstart2+pkt.getlayer(GBN).sacklen2)
-                                  + range(pkt.getlayer(GBN).sackstart3,pkt.getlayer(GBN).sackstart3+pkt.getlayer(GBN).sacklen3))
-                    for x in range(ack,last):
-                        if ~(x in sacklist):
-                            log.debug("SACK trigerred for packet %s. Retransmitting..." % x)
-                            header_GBN = GBN(type='data',
-                                         options=1,
-                                         len=len(self.buffer[x]),
-                                         hlen=6,
-                                         num=ack,
-                                         win=self.win)
-                            send(IP(src=self.sender, dst=self.receiver) / header_GBN / self.buffer[x])
+
+                        #Remove all acknowledged packets from buffer
+                        for x in self.buffer.keys():
+                            if x in sacklist:
+                                del self.buffer[x]
+
+                        #Resend SACKed packets in correct order
+                        x=ack
+                        while x != last
+                            if (x not in sacklist) and (x in self.buffer):
+                                log.debug("SACK trigerred for packet %s. Sack List: %s" , x, str(sacklist))
+                                header_GBN = GBN(type='data',
+                                             options=1,
+                                             len=len(self.buffer[x]),
+                                             hlen=6,
+                                             num=x % (2**self.n_bits),
+                                             win=self.win)
+                                send(IP(src=self.sender, dst=self.receiver) / header_GBN / self.buffer[x])
+                            x = (x+1)%2**self.n_bits
+
+                    
 
 
         # back to SEND state
@@ -277,16 +296,18 @@ class GBNSender(Automaton):
         # (all the packets currently in self.buffer) #
         ##############################################
         #TASK 3.1
-        for seqNr in self.buffer:
-            header_GBN = GBN(type='data',
-                             options=0,
-                             len=len(self.buffer[seqNr]),
-                             hlen=6,num=seqNr,
-                             win=self.win)
-            
-            send(IP(src=self.sender, dst=self.receiver) / header_GBN / self.buffer[seqNr])
+        seqNr = self.unack
+        for seqNr in range(self.unack, 2**self.n_bits) + range(self.unack - 1):
+            if seqNr in self.buffer:
+                header_GBN = GBN(type='data',
+                                 options=0,
+                                 len=len(self.buffer[seqNr]),
+                                 hlen=6,num=seqNr,
+                                 win=self.win)
+                
+                send(IP(src=self.sender, dst=self.receiver) / header_GBN / self.buffer[seqNr])
 
-
+                log.debug("Retransmit due to Timeout: %s" % seqNr)
 
 
         # back to SEND state
