@@ -89,6 +89,7 @@ class GBNReceiver(Automaton):
         self.end_receiver = False
         self.end_num = -1
         self.buffer = {}
+        self.sacksize = 0
 
     def master_filter(self, pkt):
         """Filter packts of interest.
@@ -135,6 +136,7 @@ class GBNReceiver(Automaton):
                       pkt.getlayer(GBN).type,
                       pkt.getlayer(GBN).num,
                       pkt.getlayer(GBN).win)
+            self.newestreceived = pkt.getlayer(GBN).num
 
             # check if segment is a data segment
             ptype = pkt.getlayer(GBN).type
@@ -171,7 +173,7 @@ class GBNReceiver(Automaton):
                         self.next = int((self.next + 1) % 2**self.n_bits)
                                         
                 # this was not the expected segment but is in recieving window
-                elif ((pkt.getlayer(GBN).num > self.next and pkt.getlayer(GBN).num < self.next + self.win) or ((self.next+self.win)>=2**self.n_bits and pkt.getlayer(GBN).num < (self.next+self.win)%2**self.n_bits)):
+                elif ((pkt.getlayer(GBN).num > self.next and pkt.getlayer(GBN).num < self.next + self.sacksize + self.win) or ((self.next+self.sacksize + self.win)>=2**self.n_bits and pkt.getlayer(GBN).num < (self.next+self.sacksize+self.win)%2**self.n_bits)):
                     log.debug("Out of sequence segment [num = %s] received. "
                               "Expected %s", pkt.getlayer(GBN).num, self.next)
                     #[3.2.1] Write packet to buffer if not already in buffer
@@ -244,6 +246,7 @@ class GBNReceiver(Automaton):
                                      win=self.win,
                                      )
                     #Add SACK fields as needed
+                    self.sacksize = sum(sacklen)
                     if sackcnt >= 1:
                         header_GBN.sackcnt = sackcnt
                         header_GBN.sackstart1 = sackstart[0]
