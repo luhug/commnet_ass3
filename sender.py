@@ -224,59 +224,59 @@ class GBNSender(Automaton):
                         log.error("Packet already acknowledged: %s" % ack)
                         log.debug("Buffer is %s" % str(self.buffer.keys()))
 
-                elif self.SACK and pkt.getlayer(GBN).options == 1:
-                    ############################
-                    #[3.3.2] Handle SACK header#
-                    ############################
+            if self.SACK and pkt.getlayer(GBN).options == 1:
+                ############################
+                #[3.3.2] Handle SACK header#
+                ############################
                     
 
-                    #From the data given in the packet, construct a list object
-                    #containing all packet seq.nr.'s acknowledged by SACK
-                    sacklist = list()
-                    if pkt.getlayer(GBN).sackcnt >= 1:
-                        sacklen = pkt.getlayer(GBN).sacklen1
-                        sackstart = pkt.getlayer(GBN).sackstart1
-                        last = sackstart #This is needed for a later loop. It is the first sequence number of the last SACK block.
+                #From the data given in the packet, construct a list object
+                #containing all packet seq.nr.'s acknowledged by SACK
+                sacklist = list()
+                if pkt.getlayer(GBN).sackcnt >= 1:
+                    sacklen = pkt.getlayer(GBN).sacklen1
+                    sackstart = pkt.getlayer(GBN).sackstart1
+                    last = sackstart #This is needed for a later loop. It is the first sequence number of the last SACK block.
+                    while sacklen > 0:
+                        sacklist.append(sackstart)
+                        sackstart = (sackstart+1) % 2**self.n_bits
+                        sacklen -= 1
+                    if pkt.getlayer(GBN).sackcnt >= 2:
+                        sacklen = pkt.getlayer(GBN).sacklen2
+                        sackstart = pkt.getlayer(GBN).sackstart2
+                        last = sackstart
                         while sacklen > 0:
                             sacklist.append(sackstart)
                             sackstart = (sackstart+1) % 2**self.n_bits
                             sacklen -= 1
-                        if pkt.getlayer(GBN).sackcnt >= 2:
-                            sacklen = pkt.getlayer(GBN).sacklen2
-                            sackstart = pkt.getlayer(GBN).sackstart2
+                        if pkt.getlayer(GBN).sackcnt >= 3:
+                            sacklen = pkt.getlayer(GBN).sacklen3
+                            sackstart = pkt.getlayer(GBN).sackstart3
                             last = sackstart
                             while sacklen > 0:
                                 sacklist.append(sackstart)
                                 sackstart = (sackstart+1) % 2**self.n_bits
                                 sacklen -= 1
-                            if pkt.getlayer(GBN).sackcnt >= 3:
-                                sacklen = pkt.getlayer(GBN).sacklen3
-                                sackstart = pkt.getlayer(GBN).sackstart3
-                                last = sackstart
-                                while sacklen > 0:
-                                    sacklist.append(sackstart)
-                                    sackstart = (sackstart+1) % 2**self.n_bits
-                                    sacklen -= 1
 
 
-                        #Remove all acknowledged packets from buffer
-                        for x in self.buffer.keys():
-                            if x in sacklist:
-                                del self.buffer[x]
+                    #Remove all acknowledged packets from buffer
+                    for x in self.buffer.keys():
+                        if x in sacklist:
+                            del self.buffer[x]
 
-                        #Resend SACKed packets in correct order
-                        x=ack
-                        while x != last:
-                            if (x not in sacklist) and (x in self.buffer):
-                                log.debug("SACK trigerred for packet %s. Sack List: %s" , x, str(sacklist))
-                                header_GBN = GBN(type='data',
-                                             options=1,
-                                             len=len(self.buffer[x]),
-                                             hlen=6,
-                                             num=x % (2**self.n_bits),
-                                             win=self.win)
-                                send(IP(src=self.sender, dst=self.receiver) / header_GBN / self.buffer[x])
-                            x = (x+1)%2**self.n_bits
+                    #Resend non-SACKed packets in correct order
+                    x=ack
+                    while x != last:
+                        if (x not in sacklist) and (x in self.buffer):
+                            log.debug("SACK trigerred for packet %s. Sack List: %s" , x, str(sacklist))
+                            header_GBN = GBN(type='data',
+                                         options=1,
+                                         len=len(self.buffer[x]),
+                                         hlen=6,
+                                         num=x % (2**self.n_bits),
+                                         win=self.win)
+                            send(IP(src=self.sender, dst=self.receiver) / header_GBN / self.buffer[x])
+                        x = (x+1)%2**self.n_bits
 
                     
 
