@@ -31,7 +31,7 @@ SENDER_FILE="sender.py"
 NBITS=8                    # The number of bits used to encode the sequence number
 
 # Parameters for sender
-IN_FILE=mandlebrot.bmp    # Data to transmit (e.g. sample_text.txt or ETH_logo.png)
+IN_FILE=mandelbrot.bmp    # Data to transmit (e.g. sample_text.txt or ETH_logo.png)
 SENDER_WIN_SIZE=128        # Window size of the sender
 Q_3_2=0                    # Use Selective Repeat implemented in question 3.2 (0 or 1)
 Q_3_3=1                    # Use Selective Acknowledgments implemented in question 3.3 (0 or 1)
